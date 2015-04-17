@@ -21,3 +21,4 @@ out
 privateKeys_QR
 publicKeys_Key
 publicKeys_QR
+!lib/*
