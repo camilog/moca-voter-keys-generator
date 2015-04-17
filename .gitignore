@@ -21,5 +21,4 @@ out
 privateKeys_QR
 publicKeys_Key
 publicKeys_QR
-!lib/lanterna-2.1.9.jar
-!lib/paillier.jar
+!lib/*
