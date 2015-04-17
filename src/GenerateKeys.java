@@ -8,7 +8,44 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
-public class GenerateKeys {
+import com.googlecode.lanterna.TerminalFacade;
+import com.googlecode.lanterna.gui.GUIScreen;
+import com.googlecode.lanterna.gui.Window;
+import com.googlecode.lanterna.gui.component.Button;
+import com.googlecode.lanterna.gui.dialog.MessageBox;
+import com.googlecode.lanterna.screen.Screen;
+
+public class GenerateKeys extends Window {
+
+    public GenerateKeys() {
+        super("Generate Voter Keys");
+
+        addComponent(new Button("Generate keys", () -> {
+            String id = com.googlecode.lanterna.gui.dialog.TextInputDialog.showTextInputBox(getOwner(), "Parameters", "ID of the Voter", "", 10);
+
+            try {
+                generateKeys(id);
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (WriterException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            MessageBox.showMessageBox(getOwner(), "Finalizado", "Se han generado exitosamente las claves privada y pública.\nEntregar imagen de clave privada y pública al votante.");
+        }));
+
+        addComponent(new Button("Exit application", () -> {
+            // Salirse del window
+            getOwner().getScreen().clear();
+            getOwner().getScreen().refresh();
+            getOwner().getScreen().setCursorPosition(0, 0);
+            getOwner().getScreen().refresh();
+            getOwner().getScreen().stopScreen();
+            System.exit(0);
+        }));
+    }
 
     static private void generateKeys(String id) throws NoSuchAlgorithmException, WriterException, IOException {
 
@@ -63,16 +100,16 @@ public class GenerateKeys {
     }
 
     static public void main(String[] args) throws NoSuchAlgorithmException, WriterException, IOException {
-        System.out.println("Bienvenido al programa generador de claves.");
-        System.out.print("Ingrese RUT (id) del votante (sin puntos ni guión, con dígito verificador): ");
 
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        GenerateKeys myWindow = new GenerateKeys();
+        GUIScreen guiScreen = TerminalFacade.createGUIScreen();
+        Screen screen = guiScreen.getScreen();
 
-        String id = br.readLine();
-        generateKeys(id);
+        screen.startScreen();
+        guiScreen.showWindow(myWindow, GUIScreen.Position.CENTER);
+        screen.refresh();
+        screen.stopScreen();
 
-        System.out.println("Se han generado exitosamente las claves privada y pública");
-        System.out.println("Entregar imagen de clave privada y pública al votante");
     }
 
 }
