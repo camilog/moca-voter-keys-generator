@@ -20,10 +20,13 @@ public class GenerateKeys extends Window {
     public GenerateKeys() {
         super("Generate Voter Keys");
 
+        // Add button to generate keys
         addComponent(new Button("Generate keys", () -> {
+            // Retrieve ID of the voter, used later to verify the signature
             String id = com.googlecode.lanterna.gui.dialog.TextInputDialog.showTextInputBox(getOwner(), "Parameters", "ID of the Voter", "", 10);
 
             try {
+                // Generate keys with the id given
                 generateKeys(id);
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
@@ -33,11 +36,13 @@ public class GenerateKeys extends Window {
                 e.printStackTrace();
             }
 
+            // Final message in case of success
             MessageBox.showMessageBox(getOwner(), "Finalizado", "Se han generado exitosamente las claves privada y pública.\nEntregar imagen de clave privada y pública al votante.");
         }));
 
+        // Add button to finalize application
         addComponent(new Button("Exit application", () -> {
-            // Salirse del window
+            // Close window properly and finalize application
             getOwner().getScreen().clear();
             getOwner().getScreen().refresh();
             getOwner().getScreen().setCursorPosition(0, 0);
@@ -47,53 +52,69 @@ public class GenerateKeys extends Window {
         }));
     }
 
+    // Function to generate RSA Keys for Voters
     static private void generateKeys(String id) throws NoSuchAlgorithmException, WriterException, IOException {
 
+        // Set instance RSA for generation of keys
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 
+        // Configuration of 512 length-bit of modulus and a secure random number
         keyGen.initialize(512, new SecureRandom());
 
+        // Generation of the keyPair
         KeyPair keyPair = keyGen.generateKeyPair();
 
+        // Save in different files, the public and private key
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
 
+        // Encode to save keys in a string
         String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
         String stringPrivateKey = Base64.getEncoder().encodeToString(privateKey.getEncoded());
 
-        // Obtener PublicKey a partir de String
+        // Tutorial to obtain publicKey from String
         /*
         byte[] publicKeyBytes = Base64.getDecoder().decode(stringPublicKey.getBytes("utf-8"));
         X509EncodedKeySpec publicSpec = new X509EncodedKeySpec(publicKeyBytes);
         KeyFactory publicKeyFactory = KeyFactory.getInstance("RSA");
         PublicKey newPublicKey = publicKeyFactory.generatePublic(publicSpec);
 
-        // Obtener PrivateKey a partir de String
+        // Tutorial to obtain privateKey from String
         byte[] privateKeyBytes = Base64.getDecoder().decode(stringPrivateKey.getBytes("utf-8"));
         PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(privateKeyBytes);
         KeyFactory privateKeyFactory = KeyFactory.getInstance("RSA");
         PrivateKey newPrivateKey = privateKeyFactory.generatePrivate(privateSpec);
         */
 
+        // Generate QR code images for public and private keys
         BitMatrix publicKeyBitMatrix = new QRCodeWriter().encode(stringPublicKey, BarcodeFormat.QR_CODE, 300, 300);
         BitMatrix privateKeyBitMatrix = new QRCodeWriter().encode(stringPrivateKey, BarcodeFormat.QR_CODE, 300, 300);
 
+        // Create directories to stores keys and qrCode-images of the different keys
         File dir1 = new File("publicKeys_Key");
         File dir2 = new File("publicKeys_QR");
         File dir3 = new File("privateKeys_QR");
+        File dir4 = new File("privateKeys_Key");
         dir1.mkdir();
         dir2.mkdir();
         dir3.mkdir();
+        dir4.mkdir();
 
+        // Set-up the OutputStreams to save in a file the different keys
         ObjectOutputStream publicStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("publicKeys_Key/" + id + "publicKey.key")));
+        ObjectOutputStream privateStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("privateKeys_Key/" + id + "privateKey.key")));
         FileOutputStream publicStream = new FileOutputStream("publicKeys_QR/" + id + "publicKey" + ".png");
         FileOutputStream privateStream = new FileOutputStream("privateKeys_QR/" + id + "privateKey" + ".png");
 
+        // Write in those OutputStreams the correspondent objects
         publicStreamKey.writeObject(publicKey);
+        privateStreamKey.writeObject(privateKey);
         MatrixToImageWriter.writeToStream(publicKeyBitMatrix, "png", publicStream);
         MatrixToImageWriter.writeToStream(privateKeyBitMatrix, "png", privateStream);
 
+        // Close every file
         publicStreamKey.close();
+        privateStreamKey.close();
         publicStream.close();
         privateStream.close();
 
@@ -101,13 +122,17 @@ public class GenerateKeys extends Window {
 
     static public void main(String[] args) throws NoSuchAlgorithmException, WriterException, IOException {
 
+        // Create window to display options
         GenerateKeys myWindow = new GenerateKeys();
         GUIScreen guiScreen = TerminalFacade.createGUIScreen();
         Screen screen = guiScreen.getScreen();
 
+        // Start and configuration of the screen
         screen.startScreen();
         guiScreen.showWindow(myWindow, GUIScreen.Position.CENTER);
         screen.refresh();
+
+        // Stopping screen at finalize application
         screen.stopScreen();
 
     }
