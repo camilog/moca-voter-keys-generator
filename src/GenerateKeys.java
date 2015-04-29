@@ -1,4 +1,6 @@
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.security.*;
 import java.util.Base64;
 
@@ -17,6 +19,10 @@ import com.googlecode.lanterna.screen.Screen;
 
 public class GenerateKeys extends Window {
 
+    private static final String ftpServer = "cjgomez.duckdns.org";
+    private static final String user = "pi";
+    private static final String pass = "CamiloGomez";
+
     public GenerateKeys() {
         super("Generate Voter Keys");
 
@@ -27,7 +33,7 @@ public class GenerateKeys extends Window {
 
             try {
                 // Generate keys with the id given
-                generateKeys(id);
+                generateKeysAndUploadPublicKey(id);
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
             } catch (WriterException e) {
@@ -53,7 +59,7 @@ public class GenerateKeys extends Window {
     }
 
     // Function to generate RSA Keys for Voters
-    static private void generateKeys(String id) throws NoSuchAlgorithmException, WriterException, IOException {
+    static private void generateKeysAndUploadPublicKey(String id) throws NoSuchAlgorithmException, WriterException, IOException {
 
         // Set instance RSA for generation of keys
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
@@ -68,7 +74,7 @@ public class GenerateKeys extends Window {
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
 
-        // Encode to save keys in a string
+        // Encode to save keys in a string to generate QR-Codes later
         String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
         String stringPrivateKey = Base64.getEncoder().encodeToString(privateKey.getEncoded());
 
@@ -118,6 +124,10 @@ public class GenerateKeys extends Window {
         publicStream.close();
         privateStream.close();
 
+        // Upload PublicKey to BB
+        File publicKeyFile = new File("publicKeys_Key/" + id + "publicKey.key");
+        upload(ftpServer, user, pass, "votersPublicKeys/" + id + "_publicKey.key", publicKeyFile);
+
     }
 
     static public void main(String[] args) throws NoSuchAlgorithmException, WriterException, IOException {
@@ -135,6 +145,88 @@ public class GenerateKeys extends Window {
         // Stopping screen at finalize application
         screen.stopScreen();
 
+    }
+
+    // Upload of the file
+    /**
+     * Upload a file to a FTP server. A FTP URL is generated with the
+     * following syntax:
+     * ftp://user:password@host:port/filePath;type=i.
+     *
+     * @param ftpServer , FTP server address (optional port ':portNumber').
+     * @param user , Optional user name to login.
+     * @param password , Optional password for user.
+     * @param fileName , Destination file name on FTP server (with optional
+     *            preceding relative path, e.g. "myDir/myFile.txt").
+     * @param source , Source file to upload.
+     * @throws IOException on error.
+     */
+    public static void upload( String ftpServer, String user, String password,
+                               String fileName, File source ) throws IOException
+    {
+        if (ftpServer != null && fileName != null && source != null)
+        {
+            StringBuffer sb = new StringBuffer( "ftp://" );
+            // check for authentication else assume its anonymous access.
+            if (user != null && password != null)
+            {
+                sb.append( user );
+                sb.append( ':' );
+                sb.append( password );
+                sb.append( '@' );
+            }
+            sb.append( ftpServer );
+            sb.append( '/' );
+            sb.append( fileName );
+         /*
+          * type ==&gt; a=ASCII mode, i=image (binary) mode, d= file directory
+          * listing
+          */
+            sb.append( ";type=i" );
+
+            BufferedInputStream bis = null;
+            BufferedOutputStream bos = null;
+            try
+            {
+                URL url = new URL( sb.toString() );
+                URLConnection urlc = url.openConnection();
+
+                bos = new BufferedOutputStream( urlc.getOutputStream() );
+                bis = new BufferedInputStream( new FileInputStream( source ) );
+
+                int i;
+                // read byte by byte until end of stream
+                while ((i = bis.read()) != -1)
+                {
+                    bos.write( i );
+                }
+            }
+            finally
+            {
+                if (bis != null)
+                    try
+                    {
+                        bis.close();
+                    }
+                    catch (IOException ioe)
+                    {
+                        ioe.printStackTrace();
+                    }
+                if (bos != null)
+                    try
+                    {
+                        bos.close();
+                    }
+                    catch (IOException ioe)
+                    {
+                        ioe.printStackTrace();
+                    }
+            }
+        }
+        else
+        {
+            System.out.println( "Input not available." );
+        }
     }
 
 }
