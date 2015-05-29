@@ -1,8 +1,10 @@
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.math.BigInteger;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.*;
-import java.util.Base64;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
@@ -17,11 +19,11 @@ import com.googlecode.lanterna.gui.component.Button;
 import com.googlecode.lanterna.gui.dialog.MessageBox;
 import com.googlecode.lanterna.screen.Screen;
 
+import javax.swing.*;
+
 public class GenerateKeys extends Window {
 
-    private static final String ftpServer = "cjgomez.duckdns.org";
-    private static final String user = "pi";
-    private static final String pass = "CamiloGomez";
+    private static final String publicKeyServer = "http://cjgomez.duckdns.org:3000/public_keys";
 
     public GenerateKeys() {
         super("Generate Voter Keys");
@@ -70,15 +72,14 @@ public class GenerateKeys extends Window {
         // Generation of the keyPair
         KeyPair keyPair = keyGen.generateKeyPair();
 
-        // Save in different files, the public and private key
+        // Create the variables for the public and private keys
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
 
-        // Encode to save keys in a string to generate QR-Codes later
-        String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
-        String stringPrivateKey = Base64.getEncoder().encodeToString(privateKey.getEncoded());
+        // Encode to save keys in a string to generate the private key QR-Code later
+        String stringPrivateKey = new BigInteger(privateKey.getEncoded()).toString();
 
-        // Tutorial to obtain publicKey from String
+        // Tutorial to obtain publicKey from String (Change the line of Base64 to the string format)
         /*
         byte[] publicKeyBytes = Base64.getDecoder().decode(stringPublicKey.getBytes("utf-8"));
         X509EncodedKeySpec publicSpec = new X509EncodedKeySpec(publicKeyBytes);
@@ -92,41 +93,45 @@ public class GenerateKeys extends Window {
         PrivateKey newPrivateKey = privateKeyFactory.generatePrivate(privateSpec);
         */
 
-        // Generate QR code images for public and private keys
-        BitMatrix publicKeyBitMatrix = new QRCodeWriter().encode(stringPublicKey, BarcodeFormat.QR_CODE, 300, 300);
-        BitMatrix privateKeyBitMatrix = new QRCodeWriter().encode(stringPrivateKey, BarcodeFormat.QR_CODE, 300, 300);
+        // Generate QR code images for private keys
+        BitMatrix privateKeyBitMatrix = new QRCodeWriter().encode(stringPrivateKey, BarcodeFormat.QR_CODE, 400, 400);
 
         // Create directories to stores keys and qrCode-images of the different keys
-        File dir1 = new File("publicKeys_Key");
-        File dir2 = new File("publicKeys_QR");
-        File dir3 = new File("privateKeys_QR");
-        File dir4 = new File("privateKeys_Key");
-        dir1.mkdir();
-        dir2.mkdir();
-        dir3.mkdir();
-        dir4.mkdir();
+        // File dir1 = new File("publicKeys_Key");
+        // File dir2 = new File("publicKeys_QR");
+        // File dir3 = new File("privateKeys_QR");
+        // File dir4 = new File("privateKeys_Key");
+        // dir1.mkdir();
+        // dir2.mkdir();
+        // dir3.mkdir();
+        // dir4.mkdir();
+
+        // Show privateKey QR to the voter
+        // TODO: Cambiar esto a que funcione en ambiente Lanterna -> Es necesario que este programa esté en Lanterna?
+        BufferedImage img = MatrixToImageWriter.toBufferedImage(privateKeyBitMatrix);
+        JLabel imgLabel = new JLabel(new ImageIcon(img));
+        JOptionPane.showMessageDialog(null, imgLabel);
 
         // Set-up the OutputStreams to save in a file the different keys
-        ObjectOutputStream publicStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("publicKeys_Key/" + id + "publicKey.key")));
-        ObjectOutputStream privateStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("privateKeys_Key/" + id + "privateKey.key")));
-        FileOutputStream publicStream = new FileOutputStream("publicKeys_QR/" + id + "publicKey" + ".png");
-        FileOutputStream privateStream = new FileOutputStream("privateKeys_QR/" + id + "privateKey" + ".png");
+        // ObjectOutputStream publicStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("publicKeys_Key/" + id + "publicKey.key")));
+        // ObjectOutputStream privateStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("privateKeys_Key/" + id + "privateKey.key")));
+        // FileOutputStream publicStream = new FileOutputStream("publicKeys_QR/" + id + "publicKey" + ".png");
+        // FileOutputStream privateStream = new FileOutputStream("privateKeys_QR/" + id + "privateKey" + ".png");
 
         // Write in those OutputStreams the correspondent objects
-        publicStreamKey.writeObject(publicKey);
-        privateStreamKey.writeObject(privateKey);
-        MatrixToImageWriter.writeToStream(publicKeyBitMatrix, "png", publicStream);
-        MatrixToImageWriter.writeToStream(privateKeyBitMatrix, "png", privateStream);
+        // publicStreamKey.writeObject(publicKey);
+        // privateStreamKey.writeObject(privateKey);
+        // MatrixToImageWriter.writeToStream(publicKeyBitMatrix, "png", publicStream);
+        // MatrixToImageWriter.writeToStream(privateKeyBitMatrix, "png", privateStream);
 
         // Close every file
-        publicStreamKey.close();
-        privateStreamKey.close();
-        publicStream.close();
-        privateStream.close();
+        // publicStreamKey.close();
+        // privateStreamKey.close();
+        // publicStream.close();
+        // privateStream.close();
 
         // Upload PublicKey to BB
-        File publicKeyFile = new File("publicKeys_Key/" + id + "publicKey.key");
-        upload(ftpServer, user, pass, "votersPublicKeys/" + id + "_publicKey.key", publicKeyFile);
+        upload(publicKeyServer, id, new BigInteger(publicKey.getEncoded()).toString());
 
     }
 
@@ -147,86 +152,26 @@ public class GenerateKeys extends Window {
 
     }
 
-    // Upload of the file
-    /**
-     * Upload a file to a FTP server. A FTP URL is generated with the
-     * following syntax:
-     * ftp://user:password@host:port/filePath;type=i.
-     *
-     * @param ftpServer , FTP server address (optional port ':portNumber').
-     * @param user , Optional user name to login.
-     * @param password , Optional password for user.
-     * @param fileName , Destination file name on FTP server (with optional
-     *            preceding relative path, e.g. "myDir/myFile.txt").
-     * @param source , Source file to upload.
-     * @throws IOException on error.
-     */
-    public static void upload( String ftpServer, String user, String password,
-                               String fileName, File source ) throws IOException
-    {
-        if (ftpServer != null && fileName != null && source != null)
-        {
-            StringBuffer sb = new StringBuffer( "ftp://" );
-            // check for authentication else assume its anonymous access.
-            if (user != null && password != null)
-            {
-                sb.append( user );
-                sb.append( ':' );
-                sb.append( password );
-                sb.append( '@' );
-            }
-            sb.append( ftpServer );
-            sb.append( '/' );
-            sb.append( fileName );
-         /*
-          * type ==&gt; a=ASCII mode, i=image (binary) mode, d= file directory
-          * listing
-          */
-            sb.append( ";type=i" );
+    // Upload of the publicKey as a JSON to the bbServer
+    static private void upload(String publicKeyServer, String voterId, String publicKey) throws IOException {
+        // Set the URL where to POST the public key
+        URL obj = new URL(publicKeyServer);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
-            BufferedInputStream bis = null;
-            BufferedOutputStream bos = null;
-            try
-            {
-                URL url = new URL( sb.toString() );
-                URLConnection urlc = url.openConnection();
+        // Add request header
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
 
-                bos = new BufferedOutputStream( urlc.getOutputStream() );
-                bis = new BufferedInputStream( new FileInputStream( source ) );
+        // Create JSON with the parameters
+        String urlParameters = "{\"public_key\":{\"voter\":" + voterId + ",\"key\":" + publicKey + "}}";
 
-                int i;
-                // read byte by byte until end of stream
-                while ((i = bis.read()) != -1)
-                {
-                    bos.write( i );
-                }
-            }
-            finally
-            {
-                if (bis != null)
-                    try
-                    {
-                        bis.close();
-                    }
-                    catch (IOException ioe)
-                    {
-                        ioe.printStackTrace();
-                    }
-                if (bos != null)
-                    try
-                    {
-                        bos.close();
-                    }
-                    catch (IOException ioe)
-                    {
-                        ioe.printStackTrace();
-                    }
-            }
-        }
-        else
-        {
-            System.out.println( "Input not available." );
-        }
+        // Send post request
+        con.setDoOutput(true);
+        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+        wr.writeBytes(urlParameters);
+        wr.flush();
+        wr.close();
+        con.getResponseCode();
     }
 
 }
