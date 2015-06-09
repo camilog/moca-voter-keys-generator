@@ -3,8 +3,8 @@ import java.io.*;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.security.*;
+import java.util.Base64;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
@@ -131,7 +131,8 @@ public class GenerateKeys extends Window {
         // privateStream.close();
 
         // Upload PublicKey to BB
-        upload(publicKeyServer, id, new BigInteger(publicKey.getEncoded()).toString());
+        String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
+        upload(publicKeyServer, id, stringPublicKey);
 
     }
 
@@ -163,7 +164,7 @@ public class GenerateKeys extends Window {
         con.setRequestProperty("Content-Type", "application/json");
 
         // Create JSON with the parameters
-        String urlParameters = "{\"public_key\":{\"voter\":" + voterId + ",\"key\":" + publicKey + "}}";
+        String urlParameters = "{\"public_key\":{\"voter\":" + voterId + ",\"key\":\"" + publicKey + "\"}}";
 
         // Send post request
         con.setDoOutput(true);
