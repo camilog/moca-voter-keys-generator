@@ -1,67 +1,25 @@
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.math.BigInteger;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.*;
-import java.util.Base64;
-
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
-import com.googlecode.lanterna.TerminalFacade;
-import com.googlecode.lanterna.gui.GUIScreen;
-import com.googlecode.lanterna.gui.Window;
-import com.googlecode.lanterna.gui.component.Button;
-import com.googlecode.lanterna.gui.dialog.MessageBox;
-import com.googlecode.lanterna.screen.Screen;
-
 import javax.swing.*;
+import java.awt.image.BufferedImage;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.*;
+import java.util.Base64;
 
-public class GenerateKeys extends Window {
+public class GenerateKeys_CORE {
 
     private static final String publicKeyServer = "http://cjgomez.duckdns.org:3000/public_keys";
 
-    public GenerateKeys() {
-        super("Generate Voter Keys");
-
-        // Add button to generate keys
-        addComponent(new Button("Generate keys", () -> {
-            // Retrieve ID of the voter, used later to verify the signature
-            String id = com.googlecode.lanterna.gui.dialog.TextInputDialog.showTextInputBox(getOwner(), "Parameters", "ID of the Voter", "", 10);
-
-            try {
-                // Generate keys with the id given
-                generateKeysAndUploadPublicKey(id);
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            } catch (WriterException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            // Final message in case of success
-            MessageBox.showMessageBox(getOwner(), "Finalizado", "Se han generado exitosamente las claves privada y pública.\nEntregar imagen de clave privada y pública al votante.");
-        }));
-
-        // Add button to finalize application
-        addComponent(new Button("Exit application", () -> {
-            // Close window properly and finalize application
-            getOwner().getScreen().clear();
-            getOwner().getScreen().refresh();
-            getOwner().getScreen().setCursorPosition(0, 0);
-            getOwner().getScreen().refresh();
-            getOwner().getScreen().stopScreen();
-            System.exit(0);
-        }));
-    }
-
     // Function to generate RSA Keys for Voters
-    static private void generateKeysAndUploadPublicKey(String id) throws NoSuchAlgorithmException, WriterException, IOException {
+    static protected void generateKeysAndUploadPublicKey(String id) throws NoSuchAlgorithmException, WriterException, IOException {
 
         // Set instance RSA for generation of keys
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
@@ -133,24 +91,6 @@ public class GenerateKeys extends Window {
         // Upload PublicKey to BB
         String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
         upload(publicKeyServer, id, stringPublicKey);
-
-    }
-
-    static public void main(String[] args) throws NoSuchAlgorithmException, WriterException, IOException {
-
-        // Create window to display options
-        GenerateKeys myWindow = new GenerateKeys();
-        GUIScreen guiScreen = TerminalFacade.createGUIScreen();
-        Screen screen = guiScreen.getScreen();
-
-        // Start and configuration of the screen
-        screen.startScreen();
-        guiScreen.showWindow(myWindow, GUIScreen.Position.CENTER);
-        screen.refresh();
-
-        // Stopping screen at finalize application
-        screen.stopScreen();
-
     }
 
     // Upload of the publicKey as a JSON to the bbServer
