@@ -14,9 +14,14 @@ import java.net.URL;
 import java.security.*;
 import java.util.Base64;
 
-public class GenerateKeys_CORE {
+public class GenerateKeys {
 
-    private static final String publicKeyServer = "http://cjgomez.duckdns.org:3000/public_keys";
+    private static String votersPublicKeysServer = "";
+
+    // Function to set up the bulletin board address
+    protected static void setBBAddress(String newAddress) {
+        votersPublicKeysServer = newAddress;
+    }
 
     // Function to generate RSA Keys for Voters
     static protected void generateKeysAndUploadPublicKey(String id) throws NoSuchAlgorithmException, WriterException, IOException {
@@ -90,7 +95,7 @@ public class GenerateKeys_CORE {
 
         // Upload PublicKey to BB
         String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
-        upload(publicKeyServer, id, stringPublicKey);
+        upload(votersPublicKeysServer, id, stringPublicKey);
     }
 
     // Upload of the publicKey as a JSON to the bbServer

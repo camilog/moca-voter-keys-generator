@@ -10,9 +10,9 @@ import com.googlecode.lanterna.gui.component.Button;
 import com.googlecode.lanterna.gui.dialog.MessageBox;
 import com.googlecode.lanterna.screen.Screen;
 
-public class GenerateKeys_light extends Window {
+public class GUILanterna extends Window {
 
-    public GenerateKeys_light() {
+    public GUILanterna() {
         super("Generate Voter Keys");
 
         // Add button to generate keys
@@ -22,7 +22,7 @@ public class GenerateKeys_light extends Window {
 
             try {
                 // Generate keys with the id given
-                GenerateKeys_CORE.generateKeysAndUploadPublicKey(id);
+                GenerateKeys.generateKeysAndUploadPublicKey(id);
             } catch (NoSuchAlgorithmException | WriterException | IOException e) {
                 e.printStackTrace();
             }
@@ -46,7 +46,7 @@ public class GenerateKeys_light extends Window {
     static public void main(String[] args) throws NoSuchAlgorithmException, WriterException, IOException {
 
         // Create window to display options
-        GenerateKeys_light myWindow = new GenerateKeys_light();
+        GUILanterna myWindow = new GUILanterna();
         GUIScreen guiScreen = TerminalFacade.createGUIScreen();
         Screen screen = guiScreen.getScreen();
 

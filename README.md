@@ -4,9 +4,9 @@ Second part of the project [*Voter-Ballot Self Verification*](https://github.com
 Generates the public key to encrypt the ballots, and all the shares on which the private key is separated, to distribute among all the authorities.
 
 ## Files
-1. **GenerateKeys_CORE.java**: 
-2. **GenerateKeys_light.java**:
-3. **GenerateKeys_swing.java**:
+1. **GenerateKeys.java**: 
+2. **GUILanterna.java**:
+3. **GUISwing.java**:
 
 ## How to Use
 * Download the .jar file [here](https://github.com/CamiloG/VoterBallotSelfVerificationSystem/blob/master/KeyGeneration_Apps/VoterKeysGenerator_light.jar?raw=true).
