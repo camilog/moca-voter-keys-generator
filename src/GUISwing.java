@@ -2,8 +2,6 @@ import com.google.zxing.WriterException;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
@@ -40,13 +38,10 @@ public class GUISwing extends JFrame {
         final JTextField addressTextField = new JTextField();
 
         JButton okButton = new JButton("Ok");
-        okButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String newAddress = addressTextField.getText();
-                GenerateKeys.setBBAddress(newAddress);
-                frame.setVisible(false);
-            }
+        okButton.addActionListener(e -> {
+            String newAddress = addressTextField.getText();
+            GenerateKeys.setBBAddress(newAddress);
+            frame.setVisible(false);
         });
 
         JPanel panel = new JPanel();
@@ -92,7 +87,7 @@ public class GUISwing extends JFrame {
         panel.add(idLabel);
         panel.add(idTextField);
 
-        frame.setLayout(new GridLayout(2,1));
+        frame.setLayout(new GridLayout(2, 1));
         frame.add(panel);
         frame.add(okButton);
 

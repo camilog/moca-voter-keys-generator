@@ -16,11 +16,15 @@ import java.util.Base64;
 
 public class GenerateKeys {
 
-    private static String votersPublicKeysServer = "";
+    private static String bulletinBoardAddress = "";
 
     // Function to set up the bulletin board address
     protected static void setBBAddress(String newAddress) {
-        votersPublicKeysServer = newAddress;
+        bulletinBoardAddress = newAddress;
+    }
+
+    protected static String getBBAddress() {
+        return bulletinBoardAddress;
     }
 
     // Function to generate RSA Keys for Voters
@@ -95,7 +99,7 @@ public class GenerateKeys {
 
         // Upload PublicKey to BB
         String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
-        upload(votersPublicKeysServer, id, stringPublicKey);
+        upload(bulletinBoardAddress, id, stringPublicKey);
     }
 
     // Upload of the publicKey as a JSON to the bbServer
