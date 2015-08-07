@@ -29,30 +29,34 @@ public class GUILanterna extends Window {
         // Add button to set up BB address
         addComponent(new Button("Configure Bulletin Board address", () -> {
             // Retrieve string of the bulletin board address
-            String newAddress = TextInputDialog.showTextInputBox(getOwner(), "Bulletin Board address", "New Bulletin Board address", "", 20);
+            String newAddress = TextInputDialog.showTextInputBox(getOwner(),
+                    "Bulletin Board address", "New Bulletin Board address", "", 20);
 
             // Set new bulletin board address and update label showing it
             GenerateKeys.setBBAddress(newAddress);
             updateAddressLabel((Label) addressPanel.getComponentAt(0));
 
             // Final message in case of success
-            MessageBox.showMessageBox(getOwner(), "Finalizado", "Nueva dirección del Bulletin Board exitosamente guardada.");
+            MessageBox.showMessageBox(getOwner(),
+                    "Finalizado", "Nueva dirección del Bulletin Board exitosamente guardada.");
         }));
 
         // Add button to generate keys
         addComponent(new Button("Generate keys", () -> {
             // Retrieve ID of the voter, used later to verify the signature
-            String id = com.googlecode.lanterna.gui.dialog.TextInputDialog.showTextInputBox(getOwner(), "Parameters", "ID of the Voter", "", 10);
+            String id = TextInputDialog.showTextInputBox(getOwner(),
+                    "Parameters", "ID of the Voter", "", 10);
 
+            // Generate keys with the id given
             try {
-                // Generate keys with the id given
                 GenerateKeys.generateKeysAndUploadPublicKey(id);
             } catch (NoSuchAlgorithmException | WriterException | IOException e) {
                 e.printStackTrace();
             }
 
             // Final message in case of success
-            MessageBox.showMessageBox(getOwner(), "Finalizado", "Se han generado exitosamente las claves privada y pública.\nEntregar imagen de clave privada y pública al votante.");
+            MessageBox.showMessageBox(getOwner(),
+                    "Finalizado", "Se han generado exitosamente las claves privada y pública.\nEntregar imagen de clave privada y pública al votante.");
         }));
 
         // Add button to finalize application
