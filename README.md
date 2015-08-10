@@ -9,7 +9,7 @@ Generates the public key to encrypt the ballots, and all the shares on which the
 3. **GUISwing.java**:
 
 ## How to Use
-* Download the .jar file [here](https://github.com/CamiloG/VoterBallotSelfVerificationSystem/blob/master/KeyGeneration_Apps/VoterKeysGenerator_light.jar?raw=true).
+* Download the .jar file [here](https://github.com/CamiloG/moca_qr/blob/master/KeyGeneration_Apps/VoterKeysGenerator_light.jar?raw=true).
 * Put the file voterKeysGenerator.jar in the project folder.
 * Execute voterKeysGenerator.jar with `$ java -jar voterKeysGenerator.jar`
 * The program asks the id of the voter who is creating their keys.
