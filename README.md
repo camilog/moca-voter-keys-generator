@@ -8,7 +8,7 @@ Generates both keys for the voter to sign her encryption of the ballot. The publ
 
 2. **GUILanterna.java**: Class that manages the Lanterna GUI environment, made to run on console-text-only devices (Raspberry PI for example).
 
-3. **GUISwing.java**: Class for the creation of the object after the retrieving of the JSON from the Bulletin Board server.
+3. **GUISwing.java**: Class that manages the Java-Swing GUI environment, for all the devices that can run a graphics interface.
 
 ## How to Use
 * Download the .jar file [here](https://github.com/CamiloG/moca_qr/blob/master/KeyGeneration_Apps/VoterKeysGenerator_light.jar?raw=true).
