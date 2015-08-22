@@ -1,7 +1,7 @@
 # VoterKeysGenerator
-Second part of the [*MoCa QR*](https://github.com/CamiloG/moca_qr) Voting System project.
+Second part of the [*MoCa QR*](http://mocaqr.niclabs.cl) Voting System project.
 
-Generates both keys for the voter to sign her encryption of the ballot. The public is uploaded to the Bulletin Board server and the private is stored in the [SignatureApp](http://www.github.com/CamiloG/SignatureApp).
+Generates both keys for the voter to sign her encryption of the ballot. The public is uploaded to the Bulletin Board server and the private is stored in the [VoterApp](http://www.github.com/niclabs/moca-voter-app).
 
 ## Files
 1. **GenerateKeys.java**: Main class of the program, where are all the logic and the methods to the generation, uploading and displaying of the public and private keys of each voter.
@@ -24,5 +24,5 @@ Generates both keys for the voter to sign her encryption of the ballot. The publ
 * The program asks the id of the voter who is creating their keys.
 * Next, the program shows on screen a QR-Code containing the private key of the voter.
 *Note: showing the QR-Code works now on a Java-Swing window, even if the program is running on a Lanterna environment*
-* The voter needs to read this QR-Code with [SignatureApp](https://github.com/CamiloG/SignatureApp).
+* The voter needs to read this QR-Code with [VoterApp](https://github.com/niclabs/moca-voter-app).
 * Then, the program uploads the public key of the voter to the Bulletin Board server. After this, the program finishes.
