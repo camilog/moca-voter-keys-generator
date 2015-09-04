@@ -17,18 +17,12 @@ import java.util.Base64;
 public class GenerateKeys {
 
     private static String bulletinBoardAddress = "";
-
-    // Function to set up the bulletin board address
-    protected static void setBBAddress(String newAddress) {
-        bulletinBoardAddress = newAddress;
-    }
-
-    protected static String getBBAddress() {
-        return bulletinBoardAddress;
-    }
+    private static String votersPublicKeysSubDomain = "/voters_public_keys";
 
     // Function to generate RSA Keys for Voters
     static protected void generateKeysAndUploadPublicKey(String id) throws NoSuchAlgorithmException, WriterException, IOException {
+
+        // TODO: Check if there is no previous key with this id. If it so, delete the old one from the BB
 
         // Set instance RSA for generation of keys
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
@@ -74,7 +68,6 @@ public class GenerateKeys {
         // dir4.mkdir();
 
         // Show privateKey QR to the voter
-        // TODO: Cambiar esto a que funcione en ambiente Lanterna -> Es necesario que este programa esté en Lanterna?
         BufferedImage img = MatrixToImageWriter.toBufferedImage(privateKeyBitMatrix);
         JLabel imgLabel = new JLabel(new ImageIcon(img));
         JOptionPane.showMessageDialog(null, imgLabel);
@@ -98,14 +91,15 @@ public class GenerateKeys {
         // privateStream.close();
 
         // Upload PublicKey to BB
-        String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
-        upload(bulletinBoardAddress, id, stringPublicKey);
+        //String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
+        String stringPublicKey = new BigInteger(publicKey.getEncoded()).toString();
+        upload(id, stringPublicKey);
     }
 
     // Upload of the publicKey as a JSON to the bbServer
-    static private void upload(String publicKeyServer, String voterId, String publicKey) throws IOException {
+    static private void upload(String voterId, String publicKey) throws IOException {
         // Set the URL where to POST the public key
-        URL obj = new URL(publicKeyServer);
+        URL obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
         // Add request header
@@ -113,7 +107,7 @@ public class GenerateKeys {
         con.setRequestProperty("Content-Type", "application/json");
 
         // Create JSON with the parameters
-        String urlParameters = "{\"public_key\":{\"voter\":" + voterId + ",\"key\":\"" + publicKey + "\"}}";
+        String urlParameters = "{\"voter_id\":" + voterId + ",\"value\":" + publicKey + "}";
 
         // Send post request
         con.setDoOutput(true);
@@ -122,6 +116,15 @@ public class GenerateKeys {
         wr.flush();
         wr.close();
         con.getResponseCode();
+    }
+
+    // Function to set up the bulletin board address
+    protected static void setBBAddress(String newAddress) {
+        bulletinBoardAddress = newAddress;
+    }
+
+    protected static String getBBAddress() {
+        return bulletinBoardAddress;
     }
 
 }
