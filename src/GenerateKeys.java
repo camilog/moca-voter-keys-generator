@@ -1,15 +1,22 @@
+import com.google.gson.Gson;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.*;
 import java.util.Base64;
@@ -18,11 +25,12 @@ public class GenerateKeys {
 
     private static String bulletinBoardAddress = "";
     private static String votersPublicKeysSubDomain = "/voters_public_keys";
+    private static String user, pass;
 
     // Function to generate RSA Keys for Voters
     static protected void generateKeysAndUploadPublicKey(String id) throws NoSuchAlgorithmException, WriterException, IOException {
 
-        // TODO: Check if there is no previous key with this id. If it so, delete the old one from the BB
+        checkAndDeletePreviousRecordOnBB(id);
 
         // Set instance RSA for generation of keys
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
@@ -67,6 +75,7 @@ public class GenerateKeys {
         // dir3.mkdir();
         // dir4.mkdir();
 
+        // TODO: Change this to work with a dialog of JavaFX
         // Show privateKey QR to the voter
         BufferedImage img = MatrixToImageWriter.toBufferedImage(privateKeyBitMatrix);
         JLabel imgLabel = new JLabel(new ImageIcon(img));
@@ -96,14 +105,50 @@ public class GenerateKeys {
         upload(id, stringPublicKey);
     }
 
-    // Upload of the publicKey as a JSON to the bbServer
-    static private void upload(String voterId, String publicKey) throws IOException {
+    private static void checkAndDeletePreviousRecordOnBB(String voterId) throws IOException {
         // Set the URL where to POST the public key
-        URL obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain);
+        URL obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain + "/" + voterId);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
         // Add request header
-        con.setRequestMethod("POST");
+        con.setRequestMethod("GET");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.getResponseCode();
+
+        // Receive the response
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuilder response = new StringBuilder();
+        while ((inputLine = in.readLine()) != null)
+            response.append(inputLine);
+        in.close();
+
+        String jsonString = response.toString();
+        Gson gson = new Gson();
+        VoterPublicKeyResponse voterPublicKeyResponse = gson.fromJson(jsonString, VoterPublicKeyResponse.class);
+
+        if (voterPublicKeyResponse.error == null) {
+            // DELETE entry on BB
+            // Set the URL where to DELETE the public key
+            obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain + "/" + voterId + "?rev=" + voterPublicKeyResponse._rev);
+            con = (HttpURLConnection) obj.openConnection();
+
+            // Add request header
+            con.setRequestMethod("DELETE");
+            con.setRequestProperty("Content-Type", "application/json");
+            con.getResponseCode();
+        }
+
+    }
+
+    // Upload of the publicKey as a JSON to the bbServer
+    static private void upload(String voterId, String publicKey) throws IOException {
+        // Set the URL where to POST the public key
+        URL obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain + "/" + voterId);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+        // Add request header
+        con.setRequestMethod("PUT");
         con.setRequestProperty("Content-Type", "application/json");
 
         // Create JSON with the parameters
