@@ -43,62 +43,19 @@ public class GenerateKeys {
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
 
-        // Encode to save private key into a string to generate the private key QR-Code later
+        // Encode to save private key into a string to generate the QR-Code later
         String stringPrivateKey = new BigInteger(privateKey.getEncoded()).toString();
-
-        // Tutorial to obtain publicKey from String (Change the line of Base64 to the string format)
-        /*
-        byte[] publicKeyBytes = Base64.getDecoder().decode(stringPublicKey.getBytes("utf-8"));
-        X509EncodedKeySpec publicSpec = new X509EncodedKeySpec(publicKeyBytes);
-        KeyFactory publicKeyFactory = KeyFactory.getInstance("RSA");
-        PublicKey newPublicKey = publicKeyFactory.generatePublic(publicSpec);
-
-        // Tutorial to obtain privateKey from String
-        byte[] privateKeyBytes = Base64.getDecoder().decode(stringPrivateKey.getBytes("utf-8"));
-        PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-        KeyFactory privateKeyFactory = KeyFactory.getInstance("RSA");
-        PrivateKey newPrivateKey = privateKeyFactory.generatePrivate(privateSpec);
-        */
 
         // Generate QR code images for private key
         BitMatrix privateKeyBitMatrix = new QRCodeWriter().encode(stringPrivateKey, BarcodeFormat.QR_CODE, 400, 400);
 
-        // Create directories to stores keys and qrCode-images of the different keys
-        // File dir1 = new File("publicKeys_Key");
-        // File dir2 = new File("publicKeys_QR");
-        // File dir3 = new File("privateKeys_QR");
-        // File dir4 = new File("privateKeys_Key");
-        // dir1.mkdir();
-        // dir2.mkdir();
-        // dir3.mkdir();
-        // dir4.mkdir();
-
         // TODO: Change this to work with a dialog of JavaFX
-        // Show privateKey QR to the voter
+        // Display privateKey QR to the voter
         BufferedImage img = MatrixToImageWriter.toBufferedImage(privateKeyBitMatrix);
         JLabel imgLabel = new JLabel(new ImageIcon(img));
         JOptionPane.showMessageDialog(null, imgLabel);
 
-        // Set-up the OutputStreams to save in a file the different keys
-        // ObjectOutputStream publicStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("publicKeys_Key/" + id + "publicKey.key")));
-        // ObjectOutputStream privateStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("privateKeys_Key/" + id + "privateKey.key")));
-        // FileOutputStream publicStream = new FileOutputStream("publicKeys_QR/" + id + "publicKey" + ".png");
-        // FileOutputStream privateStream = new FileOutputStream("privateKeys_QR/" + id + "privateKey" + ".png");
-
-        // Write in those OutputStreams the correspondent objects
-        // publicStreamKey.writeObject(publicKey);
-        // privateStreamKey.writeObject(privateKey);
-        // MatrixToImageWriter.writeToStream(publicKeyBitMatrix, "png", publicStream);
-        // MatrixToImageWriter.writeToStream(privateKeyBitMatrix, "png", privateStream);
-
-        // Close every file
-        // publicStreamKey.close();
-        // privateStreamKey.close();
-        // publicStream.close();
-        // privateStream.close();
-
         // Upload PublicKey to BB
-        //String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
         String stringPublicKey = new BigInteger(publicKey.getEncoded()).toString();
         upload(id, stringPublicKey);
     }
