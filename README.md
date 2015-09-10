@@ -11,8 +11,7 @@ Generates both keys for the voter to sign her encryption of the ballot. The publ
 3. **VoterPublicKeyResponse.java**: Class for the creation of the Voter Public Key object after the retrieving of the JSON from the Bulletin Board server.
 
 ## External Libraries
-1. **[ZXing](https://github.com/zxing/zxing)**: Java library for the 1D/2D barcode image process.
-
+1. **[ZXing](https://github.com/zxing/zxing)**: Java library for the 1D/2D barcode image processing.
 2. **[Gson](https://github.com/google/gson)**: Java library to convert Java Object to their JSON representation and viceversa.
 
 ## How to Use
