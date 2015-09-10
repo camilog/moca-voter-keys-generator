@@ -4,9 +4,6 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
@@ -16,20 +13,21 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.*;
-import java.util.Base64;
 
 public class GenerateKeys {
 
     private static String bulletinBoardAddress = "";
     private static String votersPublicKeysSubDomain = "/voters_public_keys";
-    private static String user, pass;
 
-    // Function to generate RSA Keys for Voters
+    // TODO: Implement user and pass verification in order to upload the voter public key
+    // private static String user, pass;
+
+    // Function to generate RSA Keys for the voter
     static protected void generateKeysAndUploadPublicKey(String id) throws NoSuchAlgorithmException, WriterException, IOException {
 
+        // If there's already a public key of this id uploaded to the BB, delete it
         checkAndDeletePreviousRecordOnBB(id);
 
         // Set instance RSA for generation of keys
@@ -45,7 +43,7 @@ public class GenerateKeys {
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
 
-        // Encode to save keys in a string to generate the private key QR-Code later
+        // Encode to save private key into a string to generate the private key QR-Code later
         String stringPrivateKey = new BigInteger(privateKey.getEncoded()).toString();
 
         // Tutorial to obtain publicKey from String (Change the line of Base64 to the string format)
@@ -62,7 +60,7 @@ public class GenerateKeys {
         PrivateKey newPrivateKey = privateKeyFactory.generatePrivate(privateSpec);
         */
 
-        // Generate QR code images for private keys
+        // Generate QR code images for private key
         BitMatrix privateKeyBitMatrix = new QRCodeWriter().encode(stringPrivateKey, BarcodeFormat.QR_CODE, 400, 400);
 
         // Create directories to stores keys and qrCode-images of the different keys
@@ -105,6 +103,7 @@ public class GenerateKeys {
         upload(id, stringPublicKey);
     }
 
+    // Check if there's a public key uploaded to the BB, if so is necessary to delete it
     private static void checkAndDeletePreviousRecordOnBB(String voterId) throws IOException {
         // Set the URL where to POST the public key
         URL obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain + "/" + voterId);
@@ -123,12 +122,14 @@ public class GenerateKeys {
             response.append(inputLine);
         in.close();
 
+        // Serialize the JSON response to an Object (VoterPublicKeyResponse)
         String jsonString = response.toString();
         Gson gson = new Gson();
         VoterPublicKeyResponse voterPublicKeyResponse = gson.fromJson(jsonString, VoterPublicKeyResponse.class);
 
+        // Check if there's already a key on the BB, if so, delete it
         if (voterPublicKeyResponse.error == null) {
-            // DELETE entry on BB
+
             // Set the URL where to DELETE the public key
             obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain + "/" + voterId + "?rev=" + voterPublicKeyResponse._rev);
             con = (HttpURLConnection) obj.openConnection();
@@ -168,6 +169,7 @@ public class GenerateKeys {
         bulletinBoardAddress = newAddress;
     }
 
+    // Function to retrieve the bulletin board address
     protected static String getBBAddress() {
         return bulletinBoardAddress;
     }
