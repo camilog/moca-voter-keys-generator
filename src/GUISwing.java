@@ -1,3 +1,4 @@
+/*
 import com.google.zxing.WriterException;
 
 import javax.swing.*;
@@ -104,3 +105,4 @@ public class GUISwing extends JFrame {
     }
 
 }
+*/

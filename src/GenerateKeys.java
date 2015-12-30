@@ -1,3 +1,4 @@
+import com.google.gson.Gson;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -6,29 +7,28 @@ import com.google.zxing.qrcode.QRCodeWriter;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.*;
-import java.util.Base64;
 
 public class GenerateKeys {
 
     private static String bulletinBoardAddress = "";
+    private static String votersPublicKeysSubDomain = "/voters_public_keys";
 
-    // Function to set up the bulletin board address
-    protected static void setBBAddress(String newAddress) {
-        bulletinBoardAddress = newAddress;
-    }
+    // TODO: Implement user and pass verification in order to upload the voter public key
+    // private static String user, pass;
 
-    protected static String getBBAddress() {
-        return bulletinBoardAddress;
-    }
-
-    // Function to generate RSA Keys for Voters
+    // Function to generate RSA Keys for the voter
     static protected void generateKeysAndUploadPublicKey(String id) throws NoSuchAlgorithmException, WriterException, IOException {
+
+        // If there's already a public key of this id uploaded to the BB, delete it
+        checkAndDeletePreviousRecordOnBB(id);
 
         // Set instance RSA for generation of keys
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
@@ -43,77 +43,74 @@ public class GenerateKeys {
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
 
-        // Encode to save keys in a string to generate the private key QR-Code later
+        // Encode to save private key into a string to generate the QR-Code later
         String stringPrivateKey = new BigInteger(privateKey.getEncoded()).toString();
 
-        // Tutorial to obtain publicKey from String (Change the line of Base64 to the string format)
-        /*
-        byte[] publicKeyBytes = Base64.getDecoder().decode(stringPublicKey.getBytes("utf-8"));
-        X509EncodedKeySpec publicSpec = new X509EncodedKeySpec(publicKeyBytes);
-        KeyFactory publicKeyFactory = KeyFactory.getInstance("RSA");
-        PublicKey newPublicKey = publicKeyFactory.generatePublic(publicSpec);
-
-        // Tutorial to obtain privateKey from String
-        byte[] privateKeyBytes = Base64.getDecoder().decode(stringPrivateKey.getBytes("utf-8"));
-        PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-        KeyFactory privateKeyFactory = KeyFactory.getInstance("RSA");
-        PrivateKey newPrivateKey = privateKeyFactory.generatePrivate(privateSpec);
-        */
-
-        // Generate QR code images for private keys
+        // Generate QR code images for private key
         BitMatrix privateKeyBitMatrix = new QRCodeWriter().encode(stringPrivateKey, BarcodeFormat.QR_CODE, 400, 400);
 
-        // Create directories to stores keys and qrCode-images of the different keys
-        // File dir1 = new File("publicKeys_Key");
-        // File dir2 = new File("publicKeys_QR");
-        // File dir3 = new File("privateKeys_QR");
-        // File dir4 = new File("privateKeys_Key");
-        // dir1.mkdir();
-        // dir2.mkdir();
-        // dir3.mkdir();
-        // dir4.mkdir();
-
-        // Show privateKey QR to the voter
-        // TODO: Cambiar esto a que funcione en ambiente Lanterna -> Es necesario que este programa esté en Lanterna?
+        // TODO: Change this to work with a dialog of JavaFX
+        // Display privateKey QR to the voter
         BufferedImage img = MatrixToImageWriter.toBufferedImage(privateKeyBitMatrix);
         JLabel imgLabel = new JLabel(new ImageIcon(img));
         JOptionPane.showMessageDialog(null, imgLabel);
 
-        // Set-up the OutputStreams to save in a file the different keys
-        // ObjectOutputStream publicStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("publicKeys_Key/" + id + "publicKey.key")));
-        // ObjectOutputStream privateStreamKey = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream("privateKeys_Key/" + id + "privateKey.key")));
-        // FileOutputStream publicStream = new FileOutputStream("publicKeys_QR/" + id + "publicKey" + ".png");
-        // FileOutputStream privateStream = new FileOutputStream("privateKeys_QR/" + id + "privateKey" + ".png");
-
-        // Write in those OutputStreams the correspondent objects
-        // publicStreamKey.writeObject(publicKey);
-        // privateStreamKey.writeObject(privateKey);
-        // MatrixToImageWriter.writeToStream(publicKeyBitMatrix, "png", publicStream);
-        // MatrixToImageWriter.writeToStream(privateKeyBitMatrix, "png", privateStream);
-
-        // Close every file
-        // publicStreamKey.close();
-        // privateStreamKey.close();
-        // publicStream.close();
-        // privateStream.close();
-
         // Upload PublicKey to BB
-        String stringPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
-        upload(bulletinBoardAddress, id, stringPublicKey);
+        String stringPublicKey = new BigInteger(publicKey.getEncoded()).toString();
+        upload(id, stringPublicKey);
     }
 
-    // Upload of the publicKey as a JSON to the bbServer
-    static private void upload(String publicKeyServer, String voterId, String publicKey) throws IOException {
+    // Check if there's a public key uploaded to the BB, if so is necessary to delete it
+    private static void checkAndDeletePreviousRecordOnBB(String voterId) throws IOException {
         // Set the URL where to POST the public key
-        URL obj = new URL(publicKeyServer);
+        URL obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain + "/" + voterId);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
         // Add request header
-        con.setRequestMethod("POST");
+        con.setRequestMethod("GET");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.getResponseCode();
+
+        // Receive the response
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuilder response = new StringBuilder();
+        while ((inputLine = in.readLine()) != null)
+            response.append(inputLine);
+        in.close();
+
+        // Serialize the JSON response to an Object (VoterPublicKeyResponse)
+        String jsonString = response.toString();
+        Gson gson = new Gson();
+        VoterPublicKeyResponse voterPublicKeyResponse = gson.fromJson(jsonString, VoterPublicKeyResponse.class);
+
+        // Check if there's already a key on the BB, if so, delete it
+        if (voterPublicKeyResponse.error == null) {
+
+            // Set the URL where to DELETE the public key
+            obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain + "/" + voterId + "?rev=" + voterPublicKeyResponse._rev);
+            con = (HttpURLConnection) obj.openConnection();
+
+            // Add request header
+            con.setRequestMethod("DELETE");
+            con.setRequestProperty("Content-Type", "application/json");
+            con.getResponseCode();
+        }
+
+    }
+
+    // Upload of the publicKey as a JSON to the bbServer
+    static private void upload(String voterId, String publicKey) throws IOException {
+        // Set the URL where to POST the public key
+        URL obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain + "/" + voterId);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+        // Add request header
+        con.setRequestMethod("PUT");
         con.setRequestProperty("Content-Type", "application/json");
 
         // Create JSON with the parameters
-        String urlParameters = "{\"public_key\":{\"voter\":" + voterId + ",\"key\":\"" + publicKey + "\"}}";
+        String urlParameters = "{\"voter_id\":" + voterId + ",\"value\":" + publicKey + "}";
 
         // Send post request
         con.setDoOutput(true);
@@ -122,6 +119,16 @@ public class GenerateKeys {
         wr.flush();
         wr.close();
         con.getResponseCode();
+    }
+
+    // Function to set up the bulletin board address
+    protected static void setBBAddress(String newAddress) {
+        bulletinBoardAddress = newAddress;
+    }
+
+    // Function to retrieve the bulletin board address
+    protected static String getBBAddress() {
+        return bulletinBoardAddress;
     }
 
 }
