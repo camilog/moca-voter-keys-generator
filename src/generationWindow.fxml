@@ -8,7 +8,7 @@
 <GridPane xmlns:fx="http://javafx.com/fxml" alignment="CENTER" hgap="10" vgap="10"
           fx:controller="GenerationWindowController">
 
-    <Label text="Select parameters to generate authority keys"
+    <Label text="Select parameters to generate voter key"
            GridPane.rowIndex="0"/>
 
     <Label text="Voter ID: "
