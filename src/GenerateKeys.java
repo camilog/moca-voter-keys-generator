@@ -19,7 +19,7 @@ import java.security.*;
 public class GenerateKeys {
 
     private static String bulletinBoardAddress = "";
-    private static String votersPublicKeysSubDomain = "/voters_public_keys";
+    private static String votersPublicKeysSubDomain = "/api/voter_public_key";
 
     // TODO: Implement user and pass verification in order to upload the voter public key
     // private static String user, pass;
@@ -28,7 +28,7 @@ public class GenerateKeys {
     static protected void generateKeysAndUploadPublicKey(String id) throws NoSuchAlgorithmException, WriterException, IOException {
 
         // If there's already a public key of this id uploaded to the BB, delete it
-        checkAndDeletePreviousRecordOnBB(id);
+//        checkAndDeletePreviousRecordOnBB(id);
 
         // Set instance RSA for generation of keys
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
@@ -102,11 +102,11 @@ public class GenerateKeys {
     // Upload of the publicKey as a JSON to the bbServer
     static private void upload(String voterId, String publicKey) throws IOException {
         // Set the URL where to POST the public key
-        URL obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain + "/" + voterId);
+        URL obj = new URL(bulletinBoardAddress + votersPublicKeysSubDomain);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
         // Add request header
-        con.setRequestMethod("PUT");
+        con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
 
         // Create JSON with the parameters
